@@ -1,0 +1,75 @@
+version: "3"
+
+
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data/
+
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=123qwe
+      - POSTGRES_DB=movies_db
+      - POSTGRES_HOST=db
+    networks:
+      - database1_network
+
+  web:
+    build: ./app
+    volumes:
+      - ./app/:/usr/src/app/
+      - static:/usr/src/app/static
+      - media:/usr/src/app/media
+    expose:
+      - "8000"
+    env_file:
+      - ./app/config/.env
+    networks:
+      - nginx_network
+      - database1_network
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:1.13
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./configs:/etc/nginx/conf.d
+      - static:/usr/src/app/static
+      - media:/usr/src/app/media
+
+    depends_on:
+      - web
+    links:
+      - db:db
+    networks:
+      - nginx_network
+
+  elasticsrch:
+    image: docker.io/library/elasticsearch:7.8.0
+    volumes:
+      - ./elasticsearch:/var/lib/elasticsearch/elasticsearch.yml
+    environment:
+      discovery: type=single-node
+      ES_JAVA_OPTS: -Xms200m -Xmx200m
+      xpack.security.enabled: "false"
+    ports:
+      - "9200:9200"
+    expose:
+      - "9200"
+
+networks:
+  nginx_network:
+    driver: bridge
+  database1_network:
+    driver: bridge
+
+volumes:
+  postgres_volume:
+  static:
+  media:
+
+

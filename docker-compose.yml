@@ -1,0 +1,88 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:13
+    restart: always
+    container_name: db
+    volumes:
+      -  $HOME/postgresql/data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=123qwe
+      - POSTGRES_DB=movies_db
+    networks:
+      - my_network
+
+  elastics:
+    image: docker.io/library/elasticsearch:7.8.0
+    container_name: elastics
+    env_file:
+      - src/.env
+    ports:
+      - ${ELASTIC_PORT}:9200
+    environment:
+      - discovery.type=single-node
+    networks:
+      - my_network
+
+  etl:
+    build:
+      context: ETL
+    command: python etl_process.py
+    container_name: etl
+    depends_on:
+      - elastics
+      - db
+    env_file: ETL/.env
+    networks:
+      - my_network
+
+  app:
+    build:
+      context: ./src
+
+    image: app
+    restart: unless-stopped
+    container_name: app
+    command: gunicorn --workers=3 -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker main:app
+    environment:
+      - REDIS_HOST=redis
+      - ELASTIC_HOST=elastics
+
+    depends_on:
+      - elastics
+      - redis
+    ports:
+      - "8000:8000"
+    networks:
+      - my_network
+
+  redis:
+    image: 'redis:6.2'
+    env_file:
+      - src/.env
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      - my_network
+
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    volumes:
+      - static:/app/web/staticfiles/
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
+volumes:
+  static:

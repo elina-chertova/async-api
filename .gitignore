@@ -1,0 +1,10 @@
+src/.env
+.idea
+**/__pycache__/
+ETL/.env
+state_film.json
+state_genre.json
+state_person.json
+src/core/project.log
+src/.env
+src/project.log
