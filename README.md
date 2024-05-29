@@ -34,5 +34,16 @@ ES_URL=elasticsearch_url
 ### Далее из корня проекта запустить команду: 
 docker-compose up -d
 
+
+## Запуск тестирования через докер
+1. Предварительно необходимо создать файл .env по аналогии с .env.example в директориях src и tests.
+
+2. Для запуска тестирования необходимо запустить из папки tests/functional команду:
+
+```docker-compose up -d```
+
+
 ## Документация API
 http://localhost:8000/api/openapi
+
+
