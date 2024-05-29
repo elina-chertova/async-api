@@ -1,0 +1,59 @@
+version: '3'
+services:
+  elasticsearch:
+    image: docker.io/library/elasticsearch:7.8.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - logger.level=WARN
+    ports:
+      - "9200:9200"
+    restart: always
+    networks:
+      - my_network
+
+  redis:
+    image: redis:latest
+    container_name: redis-test
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - my_network
+
+  api:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    image: api
+    container_name: api
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - ELASTIC_HOST=elasticsearch
+    depends_on:
+      - elasticsearch
+      - redis
+    restart: always
+    networks:
+      - my_network
+
+  tests:
+    image: api
+    container_name: tests
+    entrypoint: >
+      sh -c "pwd && ls && pip install --upgrade pip && pip install -r /usr/src/app/tests/functional/requirements.txt
+      && python /usr/src/app/tests/functional/utils/wait_for_es.py
+      && python /usr/src/app/tests/functional/utils/wait_for_redis.py
+      && pytest /usr/src/app/tests/functional"
+    expose:
+      - 8000
+    networks:
+      - my_network
+
+
+networks:
+  my_network:
+    driver: bridge

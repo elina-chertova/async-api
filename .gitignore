@@ -6,5 +6,6 @@ state_film.json
 state_genre.json
 state_person.json
 src/core/project.log
-src/.env
 src/project.log
+tests/.pytest_cache
+tests/functional/.pytest_cache

@@ -1,40 +1,13 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
 
 from api.v1.error import FILM_NOT_FOUND, PAGE_NOT_FOUND
 from api.v1.paginator import Paginator
+from models.models import Film, FilmById, GenreInFilm, PersonInFilm
 from services.film import FilmService, get_film_service
 
 router = APIRouter()
-
-
-class GenreInFilm(BaseModel):
-    id: str
-    name: str
-
-
-class PersonInFilm(BaseModel):
-    id: str
-    name: str
-
-
-class FilmById(BaseModel):
-    id: str
-    title: str
-    imdb_rating: float
-    description: str
-    genre: list[str]
-    director: list[str]
-    actors: list[PersonInFilm]
-    writers: list[PersonInFilm]
-
-
-class Film(BaseModel):
-    id: str
-    title: str
-    imdb_rating: float
 
 
 @router.get('/',
@@ -48,9 +21,8 @@ async def all_films(request: Request,
                     genre: str = Query('', description='Filter by genre')) -> list[Film]:
     """
     Returns the list of people participating in any movies.
-
     """
-    films = await person_service.get_all_films(page=paginator.page_number, sort=sort, genre=genre,
+    films = await person_service.get_all_objects(page=paginator.page_number, sort=sort, genre=genre,
                                                page_size=paginator.page_size, request=request)
     if not films:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PAGE_NOT_FOUND)
@@ -69,9 +41,8 @@ async def all_films(request: Request,
                     paginator: Paginator = Depends()) -> list[Film]:
     """
     Returns the list of people participating in any movies.
-
     """
-    films = await person_service.get_all_films(title=title, page=paginator.page_number,
+    films = await person_service.get_all_objects(title=title, page=paginator.page_number,
                                                page_size=paginator.page_size, request=request)
     if not films:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PAGE_NOT_FOUND)

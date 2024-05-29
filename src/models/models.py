@@ -29,6 +29,9 @@ class Person(Base):
     roles: list[str]
     film_ids: list[str]
 
+    class Config:
+        orm_mode = True
+
 
 class PersonInFilm(BaseModel):
     id: str
@@ -52,3 +55,6 @@ class Film(BaseModel):
     imdb_rating: float
 
 
+class GenreInFilm(BaseModel):
+    id: str
+    name: str

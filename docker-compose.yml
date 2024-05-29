@@ -3,7 +3,7 @@ services:
   db:
     image: postgres:13
     restart: always
-    container_name: db
+    container_name: database_postgres
     volumes:
       -  $HOME/postgresql/data:/var/lib/postgresql/data
     ports:
@@ -17,7 +17,7 @@ services:
 
   elastics:
     image: docker.io/library/elasticsearch:7.8.0
-    container_name: elastics
+    container_name: elasticsearch_prod
     env_file:
       - src/.env
     ports:
@@ -31,7 +31,7 @@ services:
     build:
       context: ETL
     command: python etl_process.py
-    container_name: etl
+    container_name: etl_prod
     depends_on:
       - elastics
       - db
@@ -42,6 +42,7 @@ services:
   app:
     build:
       context: ./src
+      dockerfile: Dockerfile_app
 
     image: app
     restart: unless-stopped

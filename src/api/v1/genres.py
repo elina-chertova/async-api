@@ -1,18 +1,13 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
 
 from api.v1.error import GENRE_NOT_FOUND, PAGE_NOT_FOUND
 from api.v1.paginator import Paginator
+from models.models import Genre
 from services.genre import GenreService, get_genre_service
 
 router = APIRouter()
-
-
-class Genre(BaseModel):
-    id: str
-    name: str
 
 
 @router.get('/',
@@ -26,8 +21,8 @@ async def all_genres(request: Request,
     Returns the list of genres from all movies.
 
     """
-    genre = await genre_service.get_all_genres(page=paginator.page_number,
-                                               page_size=paginator.page_size, request=request)
+    genre = await genre_service.get_all_objects(page=paginator.page_number,
+                                                page_size=paginator.page_size, request=request)
     if not genre:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PAGE_NOT_FOUND)
 
@@ -47,8 +42,8 @@ async def all_genres(request: Request,
     Returns the list of genres from all movies.
 
     """
-    genre = await genre_service.get_all_genres(name=name, page=paginator.page_number,
-                                               page_size=paginator.page_size, request=request)
+    genre = await genre_service.get_all_objects(name=name, page=paginator.page_number,
+                                                page_size=paginator.page_size, request=request)
     if not genre:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PAGE_NOT_FOUND)
 

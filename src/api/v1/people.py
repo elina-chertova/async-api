@@ -1,29 +1,13 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
 
 from api.v1.error import FILM_NOT_FOUND, PAGE_NOT_FOUND, PERSON_NOT_FOUND
 from api.v1.paginator import Paginator
+from models.models import Film, Person
 from services.person import PersonService, get_person_service
 
 router = APIRouter()
-
-
-class Film(BaseModel):
-    id: str
-    title: str
-    imdb_rating: float
-
-
-class Person(BaseModel):
-    id: str
-    full_name: str
-    role: list[str]
-    film_ids: list[str]
-
-    class Config:
-        orm_mode = True
 
 
 @router.get('/',
@@ -36,8 +20,8 @@ async def all_people(request: Request,
     """
     Returns the list of people participating in any movies.
     """
-    person = await person_service.get_all_people(request=request, page_size=paginator.page_size,
-                                                 page=paginator.page_number)
+    person = await person_service.get_all_objects(request=request, page_size=paginator.page_size,
+                                                  page=paginator.page_number)
     if not person:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PAGE_NOT_FOUND)
 
@@ -57,9 +41,9 @@ async def all_people(request: Request,
     """
     Returns the list of people participating in any movies.
     """
-    person = await person_service.get_all_people(name=name, role=role,
-                                                 request=request, page_size=paginator.page_size,
-                                                 page=paginator.page_number)
+    person = await person_service.get_all_objects(name=name, role=role,
+                                                  request=request, page_size=paginator.page_size,
+                                                  page=paginator.page_number)
     if not person:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PAGE_NOT_FOUND)
 
@@ -79,7 +63,7 @@ async def person_details(person_id: str,
     person = await person_service.get_by_id(person_id)
     if not person:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=PERSON_NOT_FOUND)
-    return Person(id=person.id, full_name=person.full_name, role=person.roles, film_ids=person.film_ids)
+    return Person(id=person.id, full_name=person.full_name, roles=person.roles, film_ids=person.film_ids)
 
 
 @router.get('/{person_id}/films/',
@@ -87,13 +71,12 @@ async def person_details(person_id: str,
             response_description="Movies' title and rating",
             description="Information about movies in which a person participated",
             tags=['ID search'])
-async def film_details(request: Request,
-                       person_id: str,
+async def film_details(person_id: str,
                        person_service: PersonService = Depends(get_person_service)) -> Film:
     """
     Returns the info about person from them ids.
     """
-    film = await person_service.get_film_by_person_id(person_id=person_id, request=request)
+    film = await person_service.get_film_by_person_id(person_id=person_id)
     if not film:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=FILM_NOT_FOUND)
     return film
